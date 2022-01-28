@@ -7,7 +7,6 @@ async function main() {
 
   await event.deployed();
 
-
   console.log("Event contract deployed to:", event.address);
   await event.createNewEvent("whatever", 10, 10);
   

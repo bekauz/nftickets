@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
+import "./Ticket.sol";
+
 
 contract Event {
 
@@ -10,6 +12,7 @@ contract Event {
     Counters.Counter private _eventIds;
 
     address public ticketContract;
+    Ticket ticket;
 
     struct EventInfo {
         string name;
@@ -24,16 +27,33 @@ contract Event {
 
     event SoldTicket(uint indexed id, address indexed ticketOwner);
 
-    constructor(/*address _ticketContract*/) public {
-        // ticketContract = _ticketContract;
+    constructor(address _ticketContract) {
+        ticketContract = _ticketContract;
+        ticket = Ticket(ticketContract);
+    }
+
+    function getEventCount() external view returns (uint) {
+        return _eventIds.current();
     }
 
     function createNewEvent(string calldata name, uint price, uint supply) external returns (uint) {
         uint256 newEventId = _eventIds.current();
-        console.log("creating event with id %d", newEventId);
+        console.log("creating event #%d", newEventId);
         events[newEventId] = EventInfo(name, price, supply, msg.sender);
         emit NewEvent(newEventId, msg.sender);
         _eventIds.increment();
         return newEventId;
-    } 
+    }
+
+    function buyTicketToEvent(uint eventId) external payable {
+
+        uint256 ticketId = ticket.buyTicket(eventId, msg.sender);
+        if (ticketId != 0) {
+            events[eventId].remainingSupply--;
+            emit SoldTicket(ticketId, msg.sender);
+        } else {
+            // TODO: throw
+        }
+    }
+
 }
